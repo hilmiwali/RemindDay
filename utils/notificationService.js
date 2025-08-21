@@ -1,6 +1,3 @@
-// utils/notificationService.js
-// This file handles local push notifications for birthday reminders
-
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 

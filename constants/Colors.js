@@ -1,5 +1,3 @@
-// constants/Colors.js
-// This file contains all the colors used in our app for consistency
 
 export const Colors = {
   // Main brand colors

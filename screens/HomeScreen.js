@@ -5,26 +5,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import BirthdayCard from '../components/BirthdayCard';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../constants/ThemeContext';
 import {
-    createTable,
-    getAllBirthdays,
-    getTodaysBirthdays
+  createTable,
+  getAllBirthdays,
+  getTodaysBirthdays
 } from '../database/birthdayDB';
 import { requestNotificationPermissions } from '../utils/notificationService';
 
 const HomeScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
   const [birthdays, setBirthdays] = useState([]);
   const [todaysBirthdays, setTodaysBirthdays] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,11 +107,17 @@ const HomeScreen = ({ navigation }) => {
     if (todaysBirthdays.length === 0) return null;
 
     return (
-      <View style={styles.todaysBanner}>
+      <View style={[
+        styles.todaysBanner, 
+        { 
+          backgroundColor: theme.todayBanner, 
+          borderColor: theme.warning 
+        }
+      ]}>
         <View style={styles.bannerHeader}>
-          <Ionicons name="gift" size={24} color={Colors.warning} />
-          <Text style={styles.bannerTitle}>🎉 Today's Birthdays!</Text>
-          <Ionicons name="gift" size={24} color={Colors.warning} />
+          <Ionicons name="gift" size={24} color={theme.warning} />
+          <Text style={[styles.bannerTitle, { color: theme.textPrimary }]}>🎉 Today's Birthdays!</Text>
+          <Ionicons name="gift" size={24} color={theme.warning} />
         </View>
         
         {todaysBirthdays.map(birthday => (
@@ -135,9 +142,9 @@ const HomeScreen = ({ navigation }) => {
 
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="calendar-outline" size={80} color={Colors.textLight} />
-      <Text style={styles.emptyTitle}>No Birthdays Yet</Text>
-      <Text style={styles.emptySubtitle}>
+      <Ionicons name="calendar-outline" size={80} color={theme.textLight} />
+      <Text style={[styles.emptyTitle, { color: theme.textSecondary }]}>No Birthdays Yet</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textLight }]}>
         Add your first birthday reminder by tapping the + button below
       </Text>
     </View>
@@ -145,25 +152,25 @@ const HomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Ionicons name="gift-outline" size={50} color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading birthdays...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <Ionicons name="gift-outline" size={50} color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading birthdays...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.background} />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>RemindDay</Text>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
+        <Text style={[styles.headerTitle, { color: theme.primary }]}>RemindDay</Text>
         <TouchableOpacity 
           onPress={navigateToSettings}
           style={styles.settingsButton}
         >
-          <Ionicons name="settings-outline" size={24} color={Colors.textPrimary} />
+          <Ionicons name="settings-outline" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -172,7 +179,7 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Upcoming birthdays list */}
       <View style={styles.listContainer}>
-        <Text style={styles.sectionTitle}>
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
           Upcoming Birthdays ({upcomingBirthdays.length})
         </Text>
         
@@ -185,8 +192,8 @@ const HomeScreen = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[Colors.primary]}
-              tintColor={Colors.primary}
+              colors={[theme.primary]}
+              tintColor={theme.primary}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -196,7 +203,10 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Floating Add Button */}
       <TouchableOpacity 
-        style={styles.fab} 
+        style={[styles.fab, { 
+          backgroundColor: theme.primary,
+          shadowColor: theme.shadow 
+        }]} 
         onPress={navigateToAddBirthday}
         activeOpacity={0.8}
       >
@@ -209,19 +219,16 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
   },
   
   loadingText: {
     fontSize: 16,
-    color: Colors.textSecondary,
     marginTop: 12,
   },
   
@@ -232,13 +239,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: Colors.background,
   },
   
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: Colors.primary,
   },
   
   settingsButton: {
@@ -246,13 +251,11 @@ const styles = StyleSheet.create({
   },
   
   todaysBanner: {
-    backgroundColor: Colors.todayBanner,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.warning,
   },
   
   bannerHeader: {
@@ -265,7 +268,6 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.textPrimary,
     marginHorizontal: 8,
   },
   
@@ -277,7 +279,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textPrimary,
     marginHorizontal: 20,
     marginBottom: 12,
   },
@@ -297,14 +298,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '600',
-    color: Colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   
   emptySubtitle: {
     fontSize: 16,
-    color: Colors.textLight,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -313,14 +312,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     right: 30,
-    backgroundColor: Colors.primary,
     width: 60,
     height: 60,
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

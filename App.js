@@ -1,6 +1,3 @@
-// App.js
-// Main application file that sets up navigation and app structure
-
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -12,21 +9,24 @@ import EditBirthdayScreen from './screens/EditBirthdayScreen';
 import HomeScreen from './screens/HomeScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
-// Import colors
-import { Colors } from './constants/Colors';
+// Import theme provider
+import { ThemeProvider, useTheme } from './constants/ThemeContext';
 
 // Create the stack navigator
 const Stack = createStackNavigator();
 
-export default function App() {
+// App content with theme support
+const AppContent = () => {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <NavigationContainer>
-      <StatusBar style="dark" backgroundColor={Colors.background} />
+      <StatusBar style={isDarkMode ? "light" : "dark"} backgroundColor={theme.background} />
       
       <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{
-          headerShown: false, // We're creating custom headers in each screen
+          headerShown: false,
           gestureEnabled: true,
           gestureDirection: 'horizontal',
           cardStyleInterpolator: ({ current, layouts }) => {
@@ -40,6 +40,7 @@ export default function App() {
                     }),
                   },
                 ],
+                backgroundColor: theme.background, // Use theme background
               },
             };
           },
@@ -60,7 +61,7 @@ export default function App() {
           component={AddBirthdayScreen}
           options={{
             title: 'Add Birthday',
-            presentation: 'modal', // Makes it slide up from bottom on iOS
+            presentation: 'modal', 
           }}
         />
         
@@ -79,7 +80,7 @@ export default function App() {
           component={EditBirthdayScreen}
           options={{
             title: 'Edit Birthday',
-            presentation: 'modal', // Makes it slide up from bottom on iOS
+            presentation: 'modal', 
           }}
         />
         
@@ -100,5 +101,14 @@ export default function App() {
         */}
       </Stack.Navigator>
     </NavigationContainer>
+  );
+};
+
+// Main App component with theme provider
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

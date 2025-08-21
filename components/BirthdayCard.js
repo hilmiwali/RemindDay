@@ -3,61 +3,80 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../constants/ThemeContext';
 import { formatBirthDate, getDaysUntilBirthday } from '../utils/notificationService';
 
 const BirthdayCard = ({ birthday, onPress, isToday = false }) => {
+  const { theme } = useTheme();
   const daysUntil = getDaysUntilBirthday(birthday.birthDate);
-  
-  // Different styling for today's birthdays
-  const cardStyle = isToday ? styles.todayCard : styles.regularCard;
-  const textStyle = isToday ? styles.todayText : styles.regularText;
   
   // Choose appropriate icon and message
   let displayMessage = '';
   let iconName = 'gift-outline';
-  let iconColor = Colors.secondary;
+  let iconColor = theme.secondary;
   
   if (isToday) {
     displayMessage = '🎉 Today!';
     iconName = 'gift';
-    iconColor = Colors.warning;
+    iconColor = theme.warning;
   } else if (daysUntil === 1) {
     displayMessage = 'Tomorrow';
     iconName = 'time-outline';
-    iconColor = Colors.primary;
+    iconColor = theme.primary;
   } else if (daysUntil <= 7) {
     displayMessage = `In ${daysUntil} days`;
     iconName = 'calendar-outline';
-    iconColor = Colors.primary;
+    iconColor = theme.primary;
   } else {
     displayMessage = `In ${daysUntil} days`;
     iconName = 'calendar-outline';
-    iconColor = Colors.textSecondary;
+    iconColor = theme.textSecondary;
   }
 
   return (
     <TouchableOpacity 
-      style={[styles.card, cardStyle]} 
+      style={[
+        styles.card, 
+        { backgroundColor: theme.cardBg, shadowColor: theme.shadow },
+        isToday ? { 
+          backgroundColor: theme.todayBanner, 
+          borderLeftColor: theme.warning,
+          borderColor: theme.warning 
+        } : { 
+          borderLeftColor: theme.primary 
+        }
+      ]} 
       onPress={onPress}
       activeOpacity={0.7}
     >
       <View style={styles.cardContent}>
         {/* Left side - Birthday info */}
         <View style={styles.leftSection}>
-          <Text style={[styles.name, textStyle]} numberOfLines={1}>
+          <Text style={[
+            styles.name, 
+            { color: theme.textPrimary },
+            isToday && { fontWeight: '700' }
+          ]} numberOfLines={1}>
             {birthday.name}
           </Text>
-          <Text style={[styles.date, isToday ? styles.todayDate : styles.regularDate]}>
+          <Text style={[
+            styles.date, 
+            { color: isToday ? theme.warning : theme.primary },
+            isToday && { fontWeight: '600' }
+          ]}>
             {formatBirthDate(birthday.birthDate)}
           </Text>
           {birthday.note && (
-            <Text style={[styles.note, isToday ? styles.todayNote : styles.regularNote]} numberOfLines={1}>
+            <Text style={[
+              styles.note, 
+              { color: theme.textSecondary },
+              isToday && { fontWeight: '500' }
+            ]} numberOfLines={1}>
               {birthday.note}
             </Text>
           )}
@@ -78,35 +97,23 @@ const BirthdayCard = ({ birthday, onPress, isToday = false }) => {
       </View>
       
       {/* Bottom border for visual separation */}
-      {!isToday && <View style={styles.bottomBorder} />}
+      {!isToday && <View style={[styles.bottomBorder, { backgroundColor: theme.border }]} />}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.cardBg,
     marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  
-  regularCard: {
     borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
-  },
-  
-  todayCard: {
-    backgroundColor: Colors.todayBanner,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.warning,
     borderWidth: 1,
-    borderColor: Colors.warning,
+    borderColor: 'transparent',
   },
   
   cardContent: {
@@ -132,42 +139,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   
-  regularText: {
-    color: Colors.textPrimary,
-  },
-  
-  todayText: {
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  
   date: {
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 2,
   },
   
-  regularDate: {
-    color: Colors.primary,
-  },
-  
-  todayDate: {
-    color: Colors.warning,
-    fontWeight: '600',
-  },
-  
   note: {
     fontSize: 12,
     fontStyle: 'italic',
-  },
-  
-  regularNote: {
-    color: Colors.textSecondary,
-  },
-  
-  todayNote: {
-    color: Colors.textSecondary,
-    fontWeight: '500',
   },
   
   icon: {
@@ -182,7 +162,6 @@ const styles = StyleSheet.create({
   
   bottomBorder: {
     height: 1,
-    backgroundColor: Colors.border,
     marginHorizontal: 16,
   },
 });

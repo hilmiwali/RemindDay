@@ -4,25 +4,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../constants/ThemeContext';
 import { getAllBirthdays } from '../database/birthdayDB';
+import { exportBirthdaysToCSV, importBirthdaysFromCSV } from '../utils/exportImportService';
 import { cancelAllNotifications, getScheduledNotifications } from '../utils/notificationService';
 
 const SettingsScreen = ({ navigation }) => {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [birthdayCount, setBirthdayCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [exportingData, setExportingData] = useState(false);
+  const [importingData, setImportingData] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -42,6 +46,37 @@ const SettingsScreen = ({ navigation }) => {
       console.log('Error loading settings data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      const success = await exportBirthdaysToCSV();
+      if (success) {
+        Alert.alert('Export Successful', 'Your birthday data has been exported successfully!');
+      }
+    } catch (error) {
+      console.log('Export error:', error);
+      Alert.alert('Export Failed', 'Failed to export data. Please try again.');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleImportData = async () => {
+    setImportingData(true);
+    try {
+      const success = await importBirthdaysFromCSV();
+      if (success) {
+        // Refresh data after successful import
+        await loadData();
+      }
+    } catch (error) {
+      console.log('Import error:', error);
+      Alert.alert('Import Failed', 'Failed to import data. Please try again.');
+    } finally {
+      setImportingData(false);
     }
   };
 
@@ -77,7 +112,7 @@ const SettingsScreen = ({ navigation }) => {
   const showAbout = () => {
     Alert.alert(
       'About RemindDay',
-      'RemindDay v1.0\n\nA simple, offline birthday reminder app built with React Native and Expo.\n\nFeatures:\n• Offline storage with SQLite\n• Local push notifications\n• Clean, user-friendly interface\n• No internet required',
+      'RemindDay v1.0\n\nA simple, offline birthday reminder app built with React Native and Expo.\n\nFeatures:\n• Offline storage with SQLite\n• Local push notifications\n• Dark/Light theme\n• Export/Import functionality\n• Clean, user-friendly interface\n• No internet required',
       [{ text: 'OK' }]
     );
   };
@@ -89,38 +124,53 @@ const SettingsScreen = ({ navigation }) => {
     onPress, 
     showArrow = true, 
     rightComponent = null,
-    danger = false 
+    danger = false,
+    disabled = false 
   }) => (
     <TouchableOpacity 
-      style={styles.settingItem} 
-      onPress={onPress}
-      activeOpacity={onPress ? 0.7 : 1}
+      style={[
+        styles.settingItem, 
+        { backgroundColor: theme.cardBg },
+        disabled && styles.disabledItem
+      ]} 
+      onPress={disabled ? null : onPress}
+      activeOpacity={onPress && !disabled ? 0.7 : 1}
     >
       <View style={styles.settingLeft}>
-        <View style={[styles.iconContainer, danger && styles.dangerIconContainer]}>
+        <View style={[
+          styles.iconContainer, 
+          danger && styles.dangerIconContainer,
+          { backgroundColor: danger ? '#FEE2E2' : theme.upcomingBg }
+        ]}>
           <Ionicons 
             name={icon} 
             size={20} 
-            color={danger ? Colors.error : Colors.primary} 
+            color={danger ? theme.error : theme.primary} 
           />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.settingTitle, danger && styles.dangerText]}>
+          <Text style={[
+            styles.settingTitle, 
+            { color: danger ? theme.error : theme.textPrimary },
+            disabled && { color: theme.textLight }
+          ]}>
             {title}
           </Text>
           {subtitle && (
-            <Text style={styles.settingSubtitle}>{subtitle}</Text>
+            <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+              {subtitle}
+            </Text>
           )}
         </View>
       </View>
       
       <View style={styles.settingRight}>
         {rightComponent}
-        {showArrow && onPress && (
+        {showArrow && onPress && !disabled && (
           <Ionicons 
             name="chevron-forward" 
             size={20} 
-            color={Colors.textLight} 
+            color={theme.textLight} 
           />
         )}
       </View>
@@ -129,26 +179,26 @@ const SettingsScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Ionicons name="settings-outline" size={50} color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading settings...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <Ionicons name="settings-outline" size={50} color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading settings...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.background} />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Settings</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -156,7 +206,7 @@ const SettingsScreen = ({ navigation }) => {
         
         {/* App Statistics */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Statistics</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Statistics</Text>
           
           {renderSettingItem({
             icon: 'people-outline',
@@ -175,9 +225,58 @@ const SettingsScreen = ({ navigation }) => {
           })}
         </View>
 
+        {/* Appearance Settings */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Appearance</Text>
+          
+          {renderSettingItem({
+            icon: isDarkMode ? 'moon' : 'sunny',
+            title: 'Dark Mode',
+            subtitle: isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+            onPress: toggleTheme,
+            showArrow: false,
+            rightComponent: (
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor={isDarkMode ? theme.cardBg : theme.textLight}
+                ios_backgroundColor={theme.border}
+              />
+            ),
+          })}
+        </View>
+
+        {/* Data Management */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Data Management</Text>
+          
+          {renderSettingItem({
+            icon: 'download-outline',
+            title: 'Export Data',
+            subtitle: 'Save birthdays to CSV file',
+            onPress: handleExportData,
+            disabled: exportingData || birthdayCount === 0,
+            rightComponent: exportingData ? (
+              <Text style={[styles.processingText, { color: theme.textSecondary }]}>Exporting...</Text>
+            ) : null,
+          })}
+          
+          {renderSettingItem({
+            icon: 'cloud-upload-outline',
+            title: 'Import Data',
+            subtitle: 'Load birthdays from CSV file',
+            onPress: handleImportData,
+            disabled: importingData,
+            rightComponent: importingData ? (
+              <Text style={[styles.processingText, { color: theme.textSecondary }]}>Importing...</Text>
+            ) : null,
+          })}
+        </View>
+
         {/* Notification Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Notifications</Text>
           
           {renderSettingItem({
             icon: 'notifications',
@@ -189,8 +288,9 @@ const SettingsScreen = ({ navigation }) => {
               <Switch
                 value={notificationsEnabled}
                 onValueChange={setNotificationsEnabled}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor={notificationsEnabled ? Colors.cardBg : Colors.textLight}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor={notificationsEnabled ? theme.cardBg : theme.textLight}
+                ios_backgroundColor={theme.border}
               />
             ),
           })}
@@ -206,7 +306,7 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* App Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Information</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>App Information</Text>
           
           {renderSettingItem({
             icon: 'information-circle-outline',
@@ -232,7 +332,7 @@ const SettingsScreen = ({ navigation }) => {
             subtitle: 'Tips for getting the most out of RemindDay',
             onPress: () => Alert.alert(
               'How to Use RemindDay',
-              '1. Tap the + button to add birthdays\n2. Set custom notification times for each person\n3. View upcoming birthdays on the home screen\n4. Tap on any birthday for details\n5. Send birthday wishes directly from the app\n\nTip: The app works completely offline!',
+              '1. Tap the + button to add birthdays\n2. Set custom notification times for each person\n3. View upcoming birthdays on the home screen\n4. Tap on any birthday for details\n5. Export data for backup\n6. Toggle dark mode in settings\n\nTip: The app works completely offline!',
               [{ text: 'Got it!' }]
             ),
           })}
@@ -240,7 +340,7 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* Storage Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Storage</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Storage</Text>
           
           {renderSettingItem({
             icon: 'server-outline',
@@ -261,10 +361,10 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
             Made with ❤️ for keeping track of special days
           </Text>
-          <Text style={styles.footerSubtext}>
+          <Text style={[styles.footerSubtext, { color: theme.textLight }]}>
             No internet required • Privacy focused • Free forever
           </Text>
         </View>
@@ -277,20 +377,22 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
   },
   
   loadingText: {
     fontSize: 16,
-    color: Colors.textSecondary,
     marginTop: 12,
+  },
+  
+  processingText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
   
   header: {
@@ -300,7 +402,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: Colors.background,
   },
   
   backButton: {
@@ -310,7 +411,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.textPrimary,
   },
   
   placeholder: {
@@ -328,13 +428,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textPrimary,
     marginHorizontal: 20,
     marginBottom: 12,
   },
   
   settingItem: {
-    backgroundColor: Colors.cardBg,
     marginHorizontal: 16,
     marginVertical: 2,
     borderRadius: 12,
@@ -343,6 +441,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
+  },
+  
+  disabledItem: {
+    opacity: 0.5,
   },
   
   settingLeft: {
@@ -355,7 +457,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.upcomingBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -372,17 +473,11 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.textPrimary,
     marginBottom: 2,
-  },
-  
-  dangerText: {
-    color: Colors.error,
   },
   
   settingSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
   },
   
   settingRight: {
@@ -398,14 +493,12 @@ const styles = StyleSheet.create({
   
   footerText: {
     fontSize: 16,
-    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   
   footerSubtext: {
     fontSize: 14,
-    color: Colors.textLight,
     textAlign: 'center',
   },
 });

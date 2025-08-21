@@ -4,22 +4,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
-    Alert,
-    Linking,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Linking,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../constants/ThemeContext';
 import { deleteBirthday } from '../database/birthdayDB';
 import { formatBirthDate, getDaysUntilBirthday } from '../utils/notificationService';
 
 const BirthdayDetailScreen = ({ navigation, route }) => {
   const { birthday } = route.params;
+  const { theme, isDarkMode } = useTheme();
   const [deleting, setDeleting] = useState(false);
   
   const daysUntil = getDaysUntilBirthday(birthday.birthDate);
@@ -108,25 +109,25 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
     if (isToday) {
       return {
         message: '🎉 Today is the birthday!',
-        color: Colors.warning,
+        color: theme.warning,
         icon: 'gift',
       };
     } else if (daysUntil === 1) {
       return {
         message: '🗓️ Tomorrow is the birthday!',
-        color: Colors.primary,
+        color: theme.primary,
         icon: 'time',
       };
     } else if (daysUntil <= 7) {
       return {
         message: `📅 ${daysUntil} days until birthday`,
-        color: Colors.primary,
+        color: theme.primary,
         icon: 'calendar',
       };
     } else {
       return {
         message: `📅 ${daysUntil} days until birthday`,
-        color: Colors.textSecondary,
+        color: theme.textSecondary,
         icon: 'calendar-outline',
       };
     }
@@ -135,34 +136,41 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
   const statusInfo = getStatusInfo();
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.background} />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Birthday Details</Text>
+        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Birthday Details</Text>
         <TouchableOpacity 
           onPress={handleEdit}
           style={styles.editButton}
         >
-          <Ionicons name="create-outline" size={24} color={Colors.primary} />
+          <Ionicons name="create-outline" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         
         {/* Main Card */}
-        <View style={[styles.mainCard, isToday && styles.todayCard]}>
+        <View style={[
+          styles.mainCard, 
+          { backgroundColor: theme.cardBg, shadowColor: theme.shadow },
+          isToday && { 
+            borderColor: theme.warning,
+            backgroundColor: theme.todayBanner 
+          }
+        ]}>
           
           {/* Name and Status */}
           <View style={styles.nameSection}>
-            <Text style={styles.name}>{birthday.name}</Text>
+            <Text style={[styles.name, { color: theme.textPrimary }]}>{birthday.name}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
               <Ionicons name={statusInfo.icon} size={16} color="white" />
               <Text style={styles.statusText}>{statusInfo.message}</Text>
@@ -172,10 +180,10 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
           {/* Birth Date */}
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={20} color={Colors.primary} />
-              <Text style={styles.infoLabel}>Birth Date</Text>
+              <Ionicons name="calendar" size={20} color={theme.primary} />
+              <Text style={[styles.infoLabel, { color: theme.textPrimary }]}>Birth Date</Text>
             </View>
-            <Text style={styles.infoValue}>
+            <Text style={[styles.infoValue, { color: theme.textSecondary }]}>
               {formatBirthDate(birthday.birthDate)}
             </Text>
           </View>
@@ -183,10 +191,10 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
           {/* Notification Time */}
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Ionicons name="notifications" size={20} color={Colors.primary} />
-              <Text style={styles.infoLabel}>Notification Time</Text>
+              <Ionicons name="notifications" size={20} color={theme.primary} />
+              <Text style={[styles.infoLabel, { color: theme.textPrimary }]}>Notification Time</Text>
             </View>
-            <Text style={styles.infoValue}>
+            <Text style={[styles.infoValue, { color: theme.textSecondary }]}>
               {new Date(`2024-01-01T${birthday.notificationTime}:00`).toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit'
@@ -198,10 +206,10 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
           {birthday.note && (
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
-                <Ionicons name="document-text" size={20} color={Colors.primary} />
-                <Text style={styles.infoLabel}>Note</Text>
+                <Ionicons name="document-text" size={20} color={theme.primary} />
+                <Text style={[styles.infoLabel, { color: theme.textPrimary }]}>Note</Text>
               </View>
-              <Text style={styles.noteText}>{birthday.note}</Text>
+              <Text style={[styles.noteText, { color: theme.textSecondary }]}>{birthday.note}</Text>
             </View>
           )}
         </View>
@@ -209,26 +217,32 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
         {/* Action Buttons */}
         {isToday && (
           <View style={styles.actionSection}>
-            <Text style={styles.actionTitle}>Send Birthday Wishes</Text>
+            <Text style={[styles.actionTitle, { color: theme.textPrimary }]}>Send Birthday Wishes</Text>
             
             <TouchableOpacity 
-              style={styles.actionButton}
+              style={[styles.actionButton, { 
+                backgroundColor: theme.cardBg,
+                shadowColor: theme.shadow 
+              }]}
               onPress={sendWhatsApp}
               activeOpacity={0.7}
             >
               <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
-              <Text style={styles.actionButtonText}>Send WhatsApp Message</Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              <Text style={[styles.actionButtonText, { color: theme.textPrimary }]}>Send WhatsApp Message</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.actionButton}
+              style={[styles.actionButton, { 
+                backgroundColor: theme.cardBg,
+                shadowColor: theme.shadow 
+              }]}
               onPress={sendSMS}
               activeOpacity={0.7}
             >
-              <Ionicons name="chatbubble" size={24} color={Colors.primary} />
-              <Text style={styles.actionButtonText}>Send SMS</Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              <Ionicons name="chatbubble" size={24} color={theme.primary} />
+              <Text style={[styles.actionButtonText, { color: theme.textPrimary }]}>Send SMS</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
         )}
@@ -236,13 +250,20 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
         {/* Delete Button */}
         <View style={styles.dangerSection}>
           <TouchableOpacity 
-            style={[styles.deleteButton, deleting && styles.deleteButtonDisabled]}
+            style={[
+              styles.deleteButton, 
+              { 
+                backgroundColor: theme.cardBg,
+                borderColor: theme.error 
+              },
+              deleting && styles.deleteButtonDisabled
+            ]}
             onPress={handleDelete}
             disabled={deleting}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={20} color={Colors.error} />
-            <Text style={styles.deleteButtonText}>
+            <Ionicons name="trash-outline" size={20} color={theme.error} />
+            <Text style={[styles.deleteButtonText, { color: theme.error }]}>
               {deleting ? 'Deleting...' : 'Delete Birthday'}
             </Text>
           </TouchableOpacity>
@@ -256,7 +277,6 @@ const BirthdayDetailScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   
   header: {
@@ -266,7 +286,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: Colors.background,
   },
   
   backButton: {
@@ -276,7 +295,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.textPrimary,
   },
   
   editButton: {
@@ -288,21 +306,15 @@ const styles = StyleSheet.create({
   },
   
   mainCard: {
-    backgroundColor: Colors.cardBg,
     margin: 16,
     borderRadius: 16,
     padding: 20,
     elevation: 4,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-  },
-  
-  todayCard: {
     borderWidth: 2,
-    borderColor: Colors.warning,
-    backgroundColor: Colors.todayBanner,
+    borderColor: 'transparent',
   },
   
   nameSection: {
@@ -313,7 +325,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 28,
     fontWeight: '700',
-    color: Colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -346,19 +357,16 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
     marginLeft: 12,
   },
   
   infoValue: {
     fontSize: 18,
-    color: Colors.textSecondary,
     marginLeft: 32,
   },
   
   noteText: {
     fontSize: 16,
-    color: Colors.textSecondary,
     marginLeft: 32,
     lineHeight: 22,
     fontStyle: 'italic',
@@ -372,19 +380,16 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textPrimary,
     marginBottom: 16,
   },
   
   actionButton: {
-    backgroundColor: Colors.cardBg,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     elevation: 2,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -393,7 +398,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.textPrimary,
     flex: 1,
     marginLeft: 16,
   },
@@ -405,14 +409,12 @@ const styles = StyleSheet.create({
   },
   
   deleteButton: {
-    backgroundColor: Colors.cardBg,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.error,
   },
   
   deleteButtonDisabled: {
@@ -422,7 +424,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.error,
     marginLeft: 8,
   },
 });

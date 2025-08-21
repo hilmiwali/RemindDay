@@ -5,23 +5,24 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../constants/ThemeContext';
 import { insertBirthday } from '../database/birthdayDB';
 import { scheduleBirthdayNotification } from '../utils/notificationService';
 
 const AddBirthdayScreen = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
   // Form state
   const [name, setName] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -128,20 +129,20 @@ const AddBirthdayScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.background} />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Birthday</Text>
+        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Add Birthday</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -150,11 +151,15 @@ const AddBirthdayScreen = ({ navigation }) => {
           
           {/* Name Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Name *</Text>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>Name *</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.border,
+                color: theme.textPrimary 
+              }]}
               placeholder="Enter person's name"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={theme.textLight}
               value={name}
               onChangeText={setName}
               maxLength={50}
@@ -165,50 +170,60 @@ const AddBirthdayScreen = ({ navigation }) => {
 
           {/* Birth Date Picker */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Birth Date *</Text>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>Birth Date *</Text>
             <TouchableOpacity 
-              style={styles.dateButton}
+              style={[styles.dateButton, { 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.border 
+              }]}
               onPress={() => setShowDatePicker(true)}
             >
-              <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
-              <Text style={styles.dateText}>
+              <Ionicons name="calendar-outline" size={20} color={theme.primary} />
+              <Text style={[styles.dateText, { color: theme.textPrimary }]}>
                 {selectedDate.toLocaleDateString('en-US', { 
                   month: 'long', 
                   day: 'numeric' 
                 })}
               </Text>
-              <Ionicons name="chevron-down" size={20} color={Colors.textSecondary} />
+              <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
           {/* Notification Time Picker */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Notification Time</Text>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>Notification Time</Text>
             <TouchableOpacity 
-              style={styles.dateButton}
+              style={[styles.dateButton, { 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.border 
+              }]}
               onPress={() => setShowTimePicker(true)}
             >
-              <Ionicons name="time-outline" size={20} color={Colors.primary} />
-              <Text style={styles.dateText}>
+              <Ionicons name="time-outline" size={20} color={theme.primary} />
+              <Text style={[styles.dateText, { color: theme.textPrimary }]}>
                 {getTimeFromString(notificationTime).toLocaleTimeString('en-US', {
                   hour: 'numeric',
                   minute: '2-digit'
                 })}
               </Text>
-              <Ionicons name="chevron-down" size={20} color={Colors.textSecondary} />
+              <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
-            <Text style={styles.helperText}>
+            <Text style={[styles.helperText, { color: theme.textSecondary }]}>
               Choose when you'd like to be reminded
             </Text>
           </View>
 
           {/* Note Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Note (Optional)</Text>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>Note (Optional)</Text>
             <TextInput
-              style={[styles.textInput, styles.noteInput]}
+              style={[styles.textInput, styles.noteInput, { 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.border,
+                color: theme.textPrimary 
+              }]}
               placeholder="Add a special note or memory..."
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={theme.textLight}
               value={note}
               onChangeText={setNote}
               maxLength={200}
@@ -216,14 +231,18 @@ const AddBirthdayScreen = ({ navigation }) => {
               numberOfLines={3}
               textAlignVertical="top"
             />
-            <Text style={styles.characterCount}>
+            <Text style={[styles.characterCount, { color: theme.textLight }]}>
               {note.length}/200 characters
             </Text>
           </View>
 
           {/* Save Button */}
           <TouchableOpacity 
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            style={[
+              styles.saveButton, 
+              { backgroundColor: theme.accent, shadowColor: theme.shadow },
+              saving && { backgroundColor: theme.textLight }
+            ]}
             onPress={saveBirthday}
             disabled={saving}
             activeOpacity={0.8}
@@ -269,7 +288,6 @@ const AddBirthdayScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   
   header: {
@@ -279,7 +297,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: Colors.background,
   },
   
   backButton: {
@@ -289,7 +306,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.textPrimary,
   },
   
   placeholder: {
@@ -311,19 +327,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
     marginBottom: 8,
   },
   
   textInput: {
-    backgroundColor: Colors.cardBg,
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: Colors.textPrimary,
   },
   
   noteInput: {
@@ -332,9 +344,7 @@ const styles = StyleSheet.create({
   },
   
   dateButton: {
-    backgroundColor: Colors.cardBg,
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -345,27 +355,23 @@ const styles = StyleSheet.create({
   
   dateText: {
     fontSize: 16,
-    color: Colors.textPrimary,
     flex: 1,
     marginLeft: 12,
   },
   
   helperText: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginTop: 4,
     fontStyle: 'italic',
   },
   
   characterCount: {
     fontSize: 12,
-    color: Colors.textLight,
     textAlign: 'right',
     marginTop: 4,
   },
   
   saveButton: {
-    backgroundColor: Colors.accent,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -374,16 +380,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 12,
     elevation: 2,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-  },
-  
-  saveButtonDisabled: {
-    backgroundColor: Colors.textLight,
-    elevation: 0,
-    shadowOpacity: 0,
   },
   
   saveButtonText: {

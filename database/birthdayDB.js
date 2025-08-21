@@ -1,6 +1,3 @@
-// database/birthdayDB.js
-// This file handles all database operations for storing birthdays locally
-
 import * as SQLite from 'expo-sqlite';
 
 // Open/create the database file called 'birthdays.db'
